@@ -138,8 +138,16 @@ async def scrape_from_user(
     logger.info("db call*************")
     # Fetch the new jobs just scraped (assuming scraped jobs have those keywords)
     stmt = select(JobPost).where(JobPost.keywords.overlap(keywords)).order_by(JobPost.scraped_at.desc()).limit(20)
+    
+    logger.info(f"SQL statement: {stmt}")
     result = await db.execute(stmt)
-    jobs = [dict(row._mapping) for row in result.fetchall()]
+    logger.info(f"Result: {result}")
+    rows = await result.fetchall()
+    logger.info(f"Rows: {rows}")
+    jobs = [dict(row._mapping) for row in rows]
+    logger.info(f"Jobs: {jobs}")
+    # result = await db.execute(stmt)
+    # jobs = [dict(row._mapping) for row in result.fetchall()]
 
     return {
         "message": "Scraping done, returning fresh jobs",
