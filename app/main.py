@@ -120,35 +120,29 @@ async def was_scraped_recently(keywords: list[str] = Query(...)):
 async def scrape_from_user(
     keywords: list[str] = Query(...),
     x_api_key: Optional[str] = Header(None),
-    #  db: AsyncSession = Depends(get_db),  # ✅ use async db
-    db: Session = next(get_db())  # ⚠️ not ideal in async FastAPI
+    db: Session = Depends(get_db),  # ✅ fixed!
 ):
     if x_api_key != settings.SCRAPER_API_KEY:
-        
         logger.warning("Unauthorized access attempt to /scrape-from-user")
         raise HTTPException(status_code=401, detail="Unauthorized")
 
     logger.info(f"/scrape-from-user called with: {keywords}")
     redis = RedisService()
-    # db: Session = next(get_db())
-    # db: AsyncSession = Depends(get_db)
     scraper = JobScraperService(redis, db)
 
-    # Scrape jobs for given keywords (modifies DB and sets Redis)
+    # Scrape jobs (sync)
     scraper.scrape(keywords)
-    logger.info("db call*************")
-    # Fetch the new jobs just scraped (assuming scraped jobs have those keywords)
-    stmt = select(JobPost).where(JobPost.keywords.overlap(keywords)).order_by(JobPost.scraped_at.desc()).limit(20)
-    
+
+    stmt = (
+        select(JobPost)
+        .where(JobPost.keywords.overlap(keywords))
+        .order_by(JobPost.scraped_at.desc())
+        .limit(20)
+    )
     logger.info(f"SQL statement: {stmt}")
     result = db.execute(stmt)
-    logger.info(f"Result: {result}")
     rows = result.fetchall()
-    logger.info(f"Rows: {rows}")
     jobs = [dict(row._mapping) for row in rows]
-    logger.info(f"Jobs: {jobs}")
-    # result = await db.execute(stmt)
-    # jobs = [dict(row._mapping) for row in result.fetchall()]
 
     return {
         "message": "Scraping done, returning fresh jobs",
