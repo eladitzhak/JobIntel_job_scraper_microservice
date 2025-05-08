@@ -6,7 +6,7 @@ from fastapi import Depends
 from sqlalchemy import text
 from typing import Optional
 from sqlalchemy.future import select
-
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_db
 from app.google_search import GoogleSearch
@@ -120,6 +120,7 @@ async def was_scraped_recently(keywords: list[str] = Query(...)):
 async def scrape_from_user(
     keywords: list[str] = Query(...),
     x_api_key: Optional[str] = Header(None),
+     db: AsyncSession = Depends(get_db),  # ✅ use async db
 ):
     if x_api_key != settings.SCRAPER_API_KEY:
         
@@ -128,15 +129,15 @@ async def scrape_from_user(
 
     logger.info(f"/scrape-from-user called with: {keywords}")
     redis = RedisService()
-    db: Session = next(get_db())
+    # db: Session = next(get_db())
     scraper = JobScraperService(redis, db)
 
     # Scrape jobs for given keywords (modifies DB and sets Redis)
-    await scraper.scrape(keywords)
+    scraper.scrape(keywords)
 
     # Fetch the new jobs just scraped (assuming scraped jobs have those keywords)
     stmt = select(JobPost).where(JobPost.keywords.overlap(keywords)).order_by(JobPost.scraped_at.desc()).limit(20)
-    result = db.execute(stmt)
+    result = await db.execute(stmt)
     jobs = [dict(row._mapping) for row in result.fetchall()]
 
     return {
