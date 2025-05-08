@@ -1,8 +1,13 @@
+from fastapi import Query
 from fastapi import FastAPI, Request,Header, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from fastapi import Depends
 from sqlalchemy import text
+from typing import Optional
+from sqlalchemy.future import select
+
+
 from app.database import get_db
 from app.google_search import GoogleSearch
 from app.redis_service import RedisService
@@ -10,7 +15,8 @@ from app.scraper_service import JobScraperService
 from app.config import settings
 from app.log_config import logger
 from app.init_db import init_db
-from typing import Optional
+from app.models.job_post import JobPost
+
 
 if settings.DEBUG:
     import debugpy
@@ -97,3 +103,44 @@ async def check_db_connection(db: Session = Depends(get_db)):
     except Exception as e:
         logger.error(f"Database connection failed: {str(e)}")
         return {"db": "error", "details": str(e)}
+
+
+@app.get("/was-scraped-recently")
+async def was_scraped_recently(keywords: list[str] = Query(...)):
+    logger.info(f"/was-scraped-recently called with: {keywords}")
+    redis = RedisService()
+    results = {}
+
+    for keyword in keywords:
+        results[keyword] = redis.was_scraped_recently(keyword)
+
+    return results
+
+@app.get("/scrape-from-user")
+async def scrape_from_user(
+    keywords: list[str] = Query(...),
+    x_api_key: Optional[str] = Header(None),
+):
+    if x_api_key != settings.SCRAPER_API_KEY:
+        
+        logger.warning("Unauthorized access attempt to /scrape-from-user")
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+    logger.info(f"/scrape-from-user called with: {keywords}")
+    redis = RedisService()
+    db: Session = next(get_db())
+    scraper = JobScraperService(redis, db)
+
+    # Scrape jobs for given keywords (modifies DB and sets Redis)
+    scraper.scrape(keywords)
+
+    # Fetch the new jobs just scraped (assuming scraped jobs have those keywords)
+    stmt = select(JobPost).where(JobPost.keywords.overlap(keywords)).order_by(JobPost.scraped_at.desc()).limit(20)
+    result = db.execute(stmt)
+    jobs = [dict(row._mapping) for row in result.fetchall()]
+
+    return {
+        "message": "Scraping done, returning fresh jobs",
+        "keywords": keywords,
+        "jobs": jobs
+    }
