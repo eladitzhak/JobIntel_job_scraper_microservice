@@ -130,7 +130,7 @@ async def scrape_from_user(
     logger.info(f"/scrape-from-user called with: {keywords}")
     redis = RedisService()
     # db: Session = next(get_db())
-    db: AsyncSession = Depends(get_db)
+    # db: AsyncSession = Depends(get_db)
     scraper = JobScraperService(redis, db)
 
     # Scrape jobs for given keywords (modifies DB and sets Redis)
