@@ -120,7 +120,8 @@ async def was_scraped_recently(keywords: list[str] = Query(...)):
 async def scrape_from_user(
     keywords: list[str] = Query(...),
     x_api_key: Optional[str] = Header(None),
-     db: AsyncSession = Depends(get_db),  # ✅ use async db
+    #  db: AsyncSession = Depends(get_db),  # ✅ use async db
+    db: Session = next(get_db())  # ⚠️ not ideal in async FastAPI
 ):
     if x_api_key != settings.SCRAPER_API_KEY:
         
@@ -140,9 +141,9 @@ async def scrape_from_user(
     stmt = select(JobPost).where(JobPost.keywords.overlap(keywords)).order_by(JobPost.scraped_at.desc()).limit(20)
     
     logger.info(f"SQL statement: {stmt}")
-    result = await db.execute(stmt)
+    result = db.execute(stmt)
     logger.info(f"Result: {result}")
-    rows = await result.fetchall()
+    rows = result.fetchall()
     logger.info(f"Rows: {rows}")
     jobs = [dict(row._mapping) for row in rows]
     logger.info(f"Jobs: {jobs}")
