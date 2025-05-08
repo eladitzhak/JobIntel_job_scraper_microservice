@@ -135,7 +135,7 @@ async def scrape_from_user(
 
     # Scrape jobs for given keywords (modifies DB and sets Redis)
     scraper.scrape(keywords)
-
+    logger.info("db call*************")
     # Fetch the new jobs just scraped (assuming scraped jobs have those keywords)
     stmt = select(JobPost).where(JobPost.keywords.overlap(keywords)).order_by(JobPost.scraped_at.desc()).limit(20)
     result = await db.execute(stmt)
