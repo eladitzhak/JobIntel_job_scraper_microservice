@@ -15,7 +15,7 @@ from app.scraper_service import JobScraperService
 from app.config import settings
 from app.log_config import logger
 from app.init_db import init_db
-from app.models.job_post import JobPost
+from app.models.JobPost import JobPost
 
 
 if settings.DEBUG:
