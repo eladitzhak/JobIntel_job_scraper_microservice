@@ -132,7 +132,7 @@ async def scrape_from_user(
     scraper = JobScraperService(redis, db)
 
     # Scrape jobs for given keywords (modifies DB and sets Redis)
-    scraper.scrape(keywords)
+    await scraper.scrape(keywords)
 
     # Fetch the new jobs just scraped (assuming scraped jobs have those keywords)
     stmt = select(JobPost).where(JobPost.keywords.overlap(keywords)).order_by(JobPost.scraped_at.desc()).limit(20)
