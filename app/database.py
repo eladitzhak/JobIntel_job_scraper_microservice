@@ -8,7 +8,6 @@ from app.config import settings
 
 Base = declarative_base()
 # engine = create_engine(settings.POSTGRES_URL)
-print('//////////***********************************************************************in database.py - engine', settings.POSTGRES_URL)
 engine = create_engine(str(settings.POSTGRES_URL), echo=True)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

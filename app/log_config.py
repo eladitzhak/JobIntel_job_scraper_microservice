@@ -9,7 +9,7 @@ logger.remove()
 
 
 log_dir = os.path.join(os.path.dirname(__file__), "logs")
-print("📁 Log directory:", log_dir)
+logger.info("📁 Log directory:", log_dir)
 os.makedirs(log_dir, exist_ok=True) 
 # Console output
 logger.add(
@@ -30,12 +30,6 @@ logger.add(
     level="DEBUG",
     enqueue=True,
 )
-
-# ✅ Print current logger handlers info (for debug)
-print("🛠️ Logger setup complete:")
-print(f"  📄 Log file path: {log_file_path}")
-print(f"  🖥️ Console logging: ENABLED")
-print(f"  📦 File logging: ENABLED (rotation @ 10MB, retention 7d, compressed)")
 
 # Test log
 logger.debug("Logger successfully configured.")

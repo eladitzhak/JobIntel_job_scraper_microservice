@@ -100,7 +100,6 @@ class JobScraperService:
             self.db.commit()
             return True
         except Exception as e:
-            print(f"❌ Failed to commit job post to the database: {e}")
             logger.error(f"Failed to commit job post to the database: {e}")
             self.db.rollback()  # Roll back the transaction to maintain database integrity
             return False
@@ -120,6 +119,5 @@ class JobScraperService:
             validated_data["link"] = str(validated.link)  # Convert HttpUrl to string
             return validated_data  # Use model_dump() to convert the Pydantic model to a dictionary
         except ValidationError as e:
-            print(f"❌ Skipping invalid job: {e}")
             logger.error(f"Skipping invalid job: {e}")
             return None

@@ -21,8 +21,6 @@ if settings.DEBUG:
 logger.info("Starting FastAPI app...")
 logger.info("Starting FastAPI app...")
 logger.info("Test log message")
-import os
-print(os.getcwd())
 app = FastAPI()
 
 API_KEY = settings.SCRAPER_API_KEY  # read from .env
@@ -32,7 +30,7 @@ async def startup_event():
     logger.info("🔌 strtupup event! Connecting to database...")
      # Optionally test the connection
     try:
-        print("🔌 Testing DB connection...")
+        logger.info("🔌 Testing DB connection...")
         init_db()  # Ensure the database is initialized
         logger.info("🔌 Database connection successful!")
     except Exception as e:

@@ -4,8 +4,10 @@ import random
 import time
 from datetime import datetime  # Import datetime for timestamp
 from urllib.parse import quote_plus
-
 import requests
+
+from app.log_config import logger
+
 
 
 class GoogleSearch:
@@ -121,28 +123,12 @@ class GoogleSearch:
         start_index = 1  # Start from the first result
         while len(self.results) < self.num_results:
             params = self.build_params(start_index)
-            print("@" * 20, params["q"])
-            print("*" * 20)
-            print("params", params)
-            print("*" * 20)
             response = requests.get(self._BASE_URL, params=params)
             data = response.json()
-            print("*" * 20)
-            print("====start index:", start_index)
-            print("data:", data)
-            print("*" * 20)
-            print("data kind: ", type(data))
-            print("data items: ", data.get("items", []))
             if "items" not in data:
                 if start_index == 1:
-                    print("------No items found in the response.")
+                    logger.info("No results found for the initial search.")
                 break  # Stop if there are no more results
-            print("data items len: ", len(data.get("items", [])))
-            # file_title = f'data_{self.keywords[0]}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.json'
-            # print('file_title:', file_title)
-            # # Save the response to a file for debugging
-            # with open(file_title, 'a') as f:
-            #     json.dump(data.get('items', []), f, indent=4)
             self.results.extend(self.parse_results(data))
             start_index += 10
             # Introduce a random delay between requests to avoid hitting the API too quickly

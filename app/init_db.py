@@ -4,8 +4,6 @@ from app.log_config import logger
 
 
 def init_db():
-    print("📦 Creating tables if they do not exist...")
     logger.info("Creating tables if they do not exist...")
     Base.metadata.create_all(bind=engine)
-    print("✅ Database initialized!")
     logger.info("Database initialized!")
